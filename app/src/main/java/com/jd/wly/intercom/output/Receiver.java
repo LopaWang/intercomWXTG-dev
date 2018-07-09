@@ -2,13 +2,11 @@ package com.jd.wly.intercom.output;
 
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
 import com.jd.wly.intercom.data.AudioData;
 import com.jd.wly.intercom.data.MessageQueue;
 import com.jd.wly.intercom.discover.AudioHandler;
 import com.jd.wly.intercom.job.JobHandler;
-import com.jd.wly.intercom.job.ThreadCallback;
 import com.jd.wly.intercom.network.Multicast;
 import com.jd.wly.intercom.util.Command;
 import com.jd.wly.intercom.util.Constants;
@@ -18,10 +16,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.ConcurrentModificationException;
-
-import static android.content.ContentValues.TAG;
 
 /**
  * Created by yanghao1 on 2017/4/12.

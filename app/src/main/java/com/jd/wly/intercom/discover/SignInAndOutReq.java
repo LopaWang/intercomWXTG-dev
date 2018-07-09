@@ -4,7 +4,6 @@ import android.os.Handler;
 import android.os.Message;
 
 import com.jd.wly.intercom.job.JobHandler;
-import com.jd.wly.intercom.job.ThreadCallback;
 import com.jd.wly.intercom.network.Multicast;
 import com.jd.wly.intercom.util.Command;
 import com.jd.wly.intercom.util.Constants;

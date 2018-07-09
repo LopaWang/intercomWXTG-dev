@@ -1,15 +1,11 @@
 package com.jd.wly.intercom.input;
 
 import android.os.Handler;
-import android.util.Log;
 
 import com.jd.wly.intercom.data.AudioData;
 import com.jd.wly.intercom.data.MessageQueue;
 import com.jd.wly.intercom.job.JobHandler;
-import com.jd.wly.intercom.job.ThreadCallback;
 import com.jd.wly.intercom.util.AudioDataUtil;
-
-import static android.content.ContentValues.TAG;
 
 /**
  * 音频编码

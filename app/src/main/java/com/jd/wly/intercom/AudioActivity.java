@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
-import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Process;
 import android.support.annotation.NonNull;
@@ -28,7 +27,6 @@ import com.jd.wly.intercom.discover.SignInAndOutReq;
 import com.jd.wly.intercom.input.Encoder;
 import com.jd.wly.intercom.input.Recorder;
 import com.jd.wly.intercom.input.Sender;
-import com.jd.wly.intercom.job.ThreadCallback;
 import com.jd.wly.intercom.output.Decoder;
 import com.jd.wly.intercom.output.Receiver;
 import com.jd.wly.intercom.output.Tracker;
@@ -40,10 +38,8 @@ import com.jd.wly.intercom.util.IPUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +52,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     private Button closeIntercom;
     private TextView currentIp;
     private ImageView chatRecord;
-
+    private int count = 0;
     private List<IntercomUserBean> userBeanList = new ArrayList<>();
     private IntercomAdapter intercomAdapter;
 
@@ -78,8 +74,6 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     private Decoder decoder;
     private Tracker tracker;
 
-    private int mWeiChatAudio;
-    private SoundPool mSoundPool;//摇一摇音效
 
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
@@ -137,9 +131,6 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     }
 
     private void initData() {
-        //初始化SoundPool
-        mSoundPool = new SoundPool(1, AudioManager.STREAM_SYSTEM, 5);
-        mWeiChatAudio = mSoundPool.load(this, R.raw.weichat_audio, 1);
         // 初始化探测线程
         discoverRequest = new SignInAndOutReq(audioHandler);
         discoverRequest.setCommand(Command.DISC_REQUEST);
@@ -172,17 +163,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
         // 初始化音频输出节点
         receiver = new Receiver(audioHandler);
         decoder = new Decoder(audioHandler);
-        tracker = new Tracker(audioHandler, new ThreadCallback() {
-            @Override
-            public void threadStartLisener() {
-                Log.i(TAG, "threadStartLisener: 线程，知道SubRunnable线程开始执行任务了");
-            }
-
-            @Override
-            public void threadEndLisener() {
-                Log.i(TAG, "threadEndLisener: 线程，知道SubRunnable线程任务执行结束了");
-            }
-        },this);
+        tracker = new Tracker(audioHandler,recorder,this);
         // 开启音频输入、输出
 
         threadPool.execute(encoder);
@@ -240,6 +221,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
 
             if (recorder.isRecording()) {
                 recorder.setRecording(false);
+                Log.i(TAG, "onKeyUp: recorder.setRecording(false);");
                 tracker.setPlaying(true);
             }
             return true;
@@ -250,18 +232,15 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (v == chatRecord && recorder != null) {
-
+            Log.i(TAG, "onTouch: recorder.isRecording() = " + recorder.isRecording());
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 chatRecord.setImageDrawable(getResources().getDrawable(R.drawable.se_icon_voice_pressed));
                 startIntercom.setText("松开结束");
                 startIntercom.setTextColor(getResources().getColor(R.color.colorBlue));
                 //发出提示音
                 Log.i(TAG, "onTouch: trscker.isplaying = " + tracker.isPlaying());
-//                if(tracker.isPlaying()){
-//
-//                    return true;
-//                }
                 if (!recorder.isRecording()) {
+                    Log.i(TAG, "onTouch: 進來了");
                     recorder.setRecording(true);
                     tracker.setPlaying(false);
                     threadPool.execute(recorder);
@@ -271,6 +250,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
                 startIntercom.setText("按住说话");
                 startIntercom.setTextColor(getResources().getColor(R.color.white));
                 if (recorder.isRecording()) {
+                    Log.i(TAG, "onTouch: 进來了");
                     recorder.setRecording(false);
                     tracker.setPlaying(true);
                 }

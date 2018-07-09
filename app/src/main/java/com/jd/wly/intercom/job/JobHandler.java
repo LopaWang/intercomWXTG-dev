@@ -19,11 +19,6 @@ import static android.content.ContentValues.TAG;
 public abstract class JobHandler extends Thread implements Runnable {
 
     protected Handler handler;
-    private ThreadCallback mThreadCallback;
-    public JobHandler(Handler handler, ThreadCallback threadCallback) {
-        this.handler = handler;
-        this.mThreadCallback = threadCallback;
-    }
     public JobHandler(Handler handler) {
         this.handler = handler;
     }

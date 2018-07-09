@@ -5,7 +5,6 @@ import android.os.Handler;
 import com.jd.wly.intercom.data.AudioData;
 import com.jd.wly.intercom.data.MessageQueue;
 import com.jd.wly.intercom.job.JobHandler;
-import com.jd.wly.intercom.job.ThreadCallback;
 import com.jd.wly.intercom.network.Multicast;
 import com.jd.wly.intercom.util.Constants;
 

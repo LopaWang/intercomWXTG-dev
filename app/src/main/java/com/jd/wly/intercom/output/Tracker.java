@@ -12,7 +12,6 @@ import com.jd.wly.intercom.data.AudioData;
 import com.jd.wly.intercom.data.MessageQueue;
 import com.jd.wly.intercom.input.Recorder;
 import com.jd.wly.intercom.job.JobHandler;
-import com.jd.wly.intercom.job.ThreadCallback;
 import com.jd.wly.intercom.util.Constants;
 
 import static android.content.ContentValues.TAG;
@@ -26,7 +25,6 @@ public class Tracker extends JobHandler {
 
     private AudioTrack audioTrack;
     protected Handler handler;
-    private ThreadCallback mThreadCallback;
     // 音频大小
     private int outAudioBufferSize;
     // 播放标志
@@ -34,16 +32,17 @@ public class Tracker extends JobHandler {
 
     //有其他手机在讲话
     private boolean isOtherPlaying = false;
+    private Recorder mRecorder;
 
     private int mWeiChatAudio;
     private SoundPool mSoundPool;//摇一摇音效
-    private Context context;
+    private Context mContext;
 
-    public Tracker(Handler handler, ThreadCallback threadCallback , Context context) {
-        super(handler ,threadCallback);
-        this.mThreadCallback = threadCallback;
+    public Tracker(Handler handler, Recorder recorder, Context context) {
+        super(handler);
         this.handler = handler;
-        this.context = context;
+        this.mRecorder = recorder;
+        this.mContext = context;
         // 获取音频数据缓冲段大小
         outAudioBufferSize = AudioTrack.getMinBufferSize(
                 Constants.sampleRateInHz, Constants.outputChannelConfig, Constants.audioFormat);
@@ -54,7 +53,7 @@ public class Tracker extends JobHandler {
         audioTrack.play();
         //初始化SoundPool
         mSoundPool = new SoundPool(1, AudioManager.STREAM_SYSTEM, 5);
-        mWeiChatAudio = mSoundPool.load(context, R.raw.weichat_audio, 1);
+        mWeiChatAudio = mSoundPool.load(mContext, R.raw.weichat_audio, 1);
     }
 
     public boolean isPlaying() {
@@ -78,19 +77,19 @@ public class Tracker extends JobHandler {
                 if (isPlaying()) {
                     short[] bytesPkg = audioData.getRawData();
                     try {
-                        mThreadCallback.threadStartLisener();
+                        mRecorder.setRecording(false);
                         audioTrack.write(bytesPkg, 0, bytesPkg.length);
                         Log.i(TAG, "run: audioTrack" + audioTrack.getPlayState());
-//                        isOtherPlaying =true;
                     } catch (Exception e) {
                         Log.i(TAG, "run: e = " + e);
                         e.printStackTrace();
                     }
             }else {
                     Log.i(TAG, "run: isNotPlaying()");
-                    isOtherPlaying =false;
+                    Log.i(TAG, "run: mRecorder.isRecording() = " + mRecorder.isRecording());
                     //发出提示音
-                    mSoundPool.play(mWeiChatAudio, 1, 1, 0, 0, 1);
+                    mSoundPool.play(mWeiChatAudio, 1, 1, 0, 1, 1);
+                    mRecorder.setRecording(true);
                 }
 
         }
@@ -104,5 +103,6 @@ public class Tracker extends JobHandler {
         audioTrack.stop();
         audioTrack.release();
         audioTrack = null;
+        mSoundPool.release();
     }
 }

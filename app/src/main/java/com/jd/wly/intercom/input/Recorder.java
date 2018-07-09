@@ -7,7 +7,6 @@ import android.util.Log;
 import com.jd.wly.intercom.data.AudioData;
 import com.jd.wly.intercom.data.MessageQueue;
 import com.jd.wly.intercom.job.JobHandler;
-import com.jd.wly.intercom.job.ThreadCallback;
 import com.jd.wly.intercom.util.Constants;
 
 import static android.content.ContentValues.TAG;
