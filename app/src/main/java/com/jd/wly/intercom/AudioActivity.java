@@ -5,7 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -50,7 +53,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     private RecyclerView localNetworkUser;
     private TextView startIntercom;
     private Button closeIntercom;
-    private TextView currentIp;
+    private TextView currentIp , tv;
     private ImageView chatRecord;
     private int count = 0;
     private List<IntercomUserBean> userBeanList = new ArrayList<>();
@@ -74,8 +77,37 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     private Decoder decoder;
     private Tracker tracker;
 
+    private int mWeiChatAudio ,mWeiChatAudio1;
+    private SoundPool mSoundPool;//摇一摇音效
+
 
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+    public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO1  = 100;
+    public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO2  = 200;
+    private boolean isFlag = true;
+    private Handler mHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case MY_PERMISSIONS_REQUEST_RECORD_AUDIO1:
+                    isFlag = true;
+                    tv.setText("正在播放");
+                    recorder.setRecording(false);
+                    break;
+                case MY_PERMISSIONS_REQUEST_RECORD_AUDIO2:
+//                    tv.setText("播放完毕");
+                    recorder.setRecording(true);
+                    if(isFlag){
+                        tracker.setPlaying(false);
+                        mSoundPool.play(mWeiChatAudio, 1, 1, 0, 0, 1);
+                        isFlag = false;
+                    }
+                    break;
+            }
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +141,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
 
 
     private void initView() {
+        tv = (TextView) findViewById(R.id.tv);
         // 设置用户列表
         localNetworkUser = (RecyclerView) findViewById(R.id.activity_audio_local_network_user_rv);
         localNetworkUser.setLayoutManager(new LinearLayoutManager(this));
@@ -128,6 +161,11 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
         // 设置当前IP地址
         currentIp = (TextView) findViewById(R.id.activity_audio_current_ip);
         currentIp.setText(IPUtil.getLocalIPAddress());
+
+        //初始化SoundPool
+        mSoundPool = new SoundPool(1, AudioManager.STREAM_SYSTEM, 5);
+        mWeiChatAudio = mSoundPool.load(this, R.raw.weichat_audio, 1);
+        mWeiChatAudio1 = mSoundPool.load(this, R.raw.start_audio, 1);
     }
 
     private void initData() {
@@ -163,7 +201,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
         // 初始化音频输出节点
         receiver = new Receiver(audioHandler);
         decoder = new Decoder(audioHandler);
-        tracker = new Tracker(audioHandler,recorder,this);
+        tracker = new Tracker(audioHandler,recorder,this , mHandler);
         // 开启音频输入、输出
 
         threadPool.execute(encoder);
@@ -193,7 +231,6 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_F2 ||
                 keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {
-            tracker.setOtherPlaying(true);
 //            Log.i(TAG, "onTouch: trscker.isplaying = " + tracker.isPlaying());
 //            if(tracker.isPlaying()){
 //
@@ -232,11 +269,18 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (v == chatRecord && recorder != null) {
+
             Log.i(TAG, "onTouch: recorder.isRecording() = " + recorder.isRecording());
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 chatRecord.setImageDrawable(getResources().getDrawable(R.drawable.se_icon_voice_pressed));
                 startIntercom.setText("松开结束");
                 startIntercom.setTextColor(getResources().getColor(R.color.colorBlue));
+                mSoundPool.play(mWeiChatAudio1, 1, 1, 0, 0, 1);
+                try {
+                    Thread.sleep( 1000 );
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 //发出提示音
                 Log.i(TAG, "onTouch: trscker.isplaying = " + tracker.isPlaying());
                 if (!recorder.isRecording()) {

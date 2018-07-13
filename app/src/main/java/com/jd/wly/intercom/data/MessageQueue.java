@@ -1,11 +1,13 @@
 package com.jd.wly.intercom.data;
 
 import android.support.annotation.IntDef;
+import android.util.Log;
 
 import java.lang.annotation.Retention;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static android.content.ContentValues.TAG;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 /**

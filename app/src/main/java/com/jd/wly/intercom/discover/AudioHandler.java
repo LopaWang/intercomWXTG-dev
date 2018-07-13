@@ -36,6 +36,7 @@ public class AudioHandler extends Handler {
             } else if (msg.what == DISCOVERING_RECEIVE) {
                 activity.foundNewUser((String) msg.obj);
             } else if (msg.what == DISCOVERING_LEAVE) {
+                Log.i("IntercomService", "离开 =" + DISCOVERING_LEAVE);
                 activity.removeExistUser((String) msg.obj);
             }
         }
