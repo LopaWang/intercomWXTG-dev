@@ -283,6 +283,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
                     Thread.sleep( 1000 );
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+
                 }
                 //发出提示音
                 Log.i(TAG, "onTouch: trscker.isplaying = " + tracker.isPlaying());
