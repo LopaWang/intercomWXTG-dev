@@ -2,8 +2,10 @@ package com.jd.wly.intercom.input;
 
 import android.media.AudioRecord;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
+import com.jd.wly.intercom.AudioActivity;
 import com.jd.wly.intercom.data.AudioData;
 import com.jd.wly.intercom.data.MessageQueue;
 import com.jd.wly.intercom.job.JobHandler;
@@ -23,9 +25,11 @@ public class Recorder extends JobHandler {
     private int inAudioBufferSize;
     // 录音标志
     private boolean isRecording = false;
+    private Handler mHandler;
 
-    public Recorder(Handler handler) {
+    public Recorder(Handler handler,Handler mHandler) {
         super(handler);
+        this.mHandler = mHandler;
         // 获取音频数据缓冲段大小
         inAudioBufferSize = AudioRecord.getMinBufferSize(
                 Constants.sampleRateInHz, Constants.inputChannelConfig, Constants.audioFormat);

@@ -84,6 +84,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
     public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO1  = 100;
     public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO2  = 200;
+    public static final int CALL_EVENT_INFO_IS_STOPED  = 300;
     private boolean isFlag = true;
     private Handler mHandler = new Handler(){
         @Override
@@ -104,6 +105,8 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
                         isFlag = false;
                     }
                     break;
+                case CALL_EVENT_INFO_IS_STOPED:
+                    tv.setText("播放完毕");
             }
 
         }
@@ -195,7 +198,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
      */
     private void initJobHandler() {
         // 初始化音频输入节点
-        recorder = new Recorder(audioHandler);
+        recorder = new Recorder(audioHandler ,mHandler);
         encoder = new Encoder(audioHandler);
         sender = new Sender(audioHandler);
         // 初始化音频输出节点
