@@ -7,4 +7,5 @@
     <string name="press_talk">按住说话</string>
     <string name="close">关闭</string>
     <string name="current_ip">当前IP地址为：</string>
+    <string name="speaking">正在讲话</string>
 </resources>

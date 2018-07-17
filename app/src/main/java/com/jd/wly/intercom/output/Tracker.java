@@ -89,7 +89,7 @@ public class Tracker extends JobHandler {
                     }
                     setOtherPlaying(true);
                     message.what = MY_PERMISSIONS_REQUEST_RECORD_AUDIO1;
-                    mHandler.sendMessage(message);
+                    //mHandler.sendMessage(message);
 
             }else {
                     Log.i(TAG, "run: isNotPlaying()");

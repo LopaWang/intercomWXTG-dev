@@ -2,12 +2,21 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="horizontal">
 
     <TextView
         android:id="@+id/intercom_user_name_tv"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:layout_height="wrap_content"
         android:text="我"
+        android:textSize="15dp" />
+    <TextView
+        android:id="@+id/tv_speaking"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/red"
+        android:text="@string/speaking"
+        android:visibility="gone"
         android:textSize="15dp" />
 </LinearLayout>

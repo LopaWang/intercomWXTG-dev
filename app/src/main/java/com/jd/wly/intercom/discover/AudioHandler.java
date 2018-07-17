@@ -19,6 +19,8 @@ public class AudioHandler extends Handler {
     public static final int DISCOVERING_SEND = 0;
     public static final int DISCOVERING_RECEIVE = 1;
     public static final int DISCOVERING_LEAVE = 2;
+    public static final int CALL_RELEASE_EVENT = 3;
+    public static final int CALL_RELEASE_RECEVICE = 4;
 
     private WeakReference<AudioActivity> activityWeakReference;
 
@@ -38,6 +40,13 @@ public class AudioHandler extends Handler {
             } else if (msg.what == DISCOVERING_LEAVE) {
                 Log.i("IntercomService", "离开 =" + DISCOVERING_LEAVE);
                 activity.removeExistUser((String) msg.obj);
+            } else if (msg.what == CALL_RELEASE_EVENT) {
+                Log.i("IntercomService", "松开PTT =" + DISCOVERING_LEAVE);
+                activity.releasePTT((String) msg.obj);
+            }
+            else if (msg.what == CALL_RELEASE_RECEVICE) {
+                Log.i("IntercomService", "按下PTT =" + DISCOVERING_LEAVE);
+                activity.releaseBTT((String) msg.obj);
             }
         }
     }

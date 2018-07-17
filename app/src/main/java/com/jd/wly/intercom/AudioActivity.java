@@ -30,6 +30,7 @@ import com.jd.wly.intercom.discover.SignInAndOutReq;
 import com.jd.wly.intercom.input.Encoder;
 import com.jd.wly.intercom.input.Recorder;
 import com.jd.wly.intercom.input.Sender;
+import com.jd.wly.intercom.network.Multicast;
 import com.jd.wly.intercom.output.Decoder;
 import com.jd.wly.intercom.output.Receiver;
 import com.jd.wly.intercom.output.Tracker;
@@ -37,8 +38,12 @@ import com.jd.wly.intercom.users.IntercomAdapter;
 import com.jd.wly.intercom.users.IntercomUserBean;
 import com.jd.wly.intercom.users.VerticalSpaceItemDecoration;
 import com.jd.wly.intercom.util.Command;
+import com.jd.wly.intercom.util.Constants;
 import com.jd.wly.intercom.util.IPUtil;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -65,7 +70,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     // 创建循环任务线程用于间隔的发送上线消息，获取局域网内其他的用户
     private ScheduledExecutorService discoverService = Executors.newScheduledThreadPool(1);
     // 创建7个线程的固定大小线程池，分别执行DiscoverServer，以及输入、输出音频
-    private ExecutorService threadPool = Executors.newFixedThreadPool(6);
+    private ExecutorService threadPool = Executors.newFixedThreadPool(7);
 
     // 音频输入
     private Recorder recorder;
@@ -76,6 +81,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     private Receiver receiver;
     private Decoder decoder;
     private Tracker tracker;
+
 
     private int mWeiChatAudio ,mWeiChatAudio1;
     private SoundPool mSoundPool;//摇一摇音效
@@ -94,6 +100,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
                 case MY_PERMISSIONS_REQUEST_RECORD_AUDIO1:
                     isFlag = true;
                     tv.setText("正在播放");
+                    startIntercom.setText("有人讲话");
                     recorder.setRecording(false);
                     break;
                 case MY_PERMISSIONS_REQUEST_RECORD_AUDIO2:
@@ -285,6 +292,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
                     e.printStackTrace();
 
                 }
+                receiveReleaseCallEvent();
                 //发出提示音
                 Log.i(TAG, "onTouch: trscker.isplaying = " + tracker.isPlaying());
                 if (!recorder.isRecording()) {
@@ -302,10 +310,59 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
                     recorder.setRecording(false);
                     tracker.setPlaying(true);
                 }
+                //handle the call release event
+                sendReleaseCallEvent();
+                //handle the call release event ---end
+
+
             }
             return true;
         }
         return false;
+    }
+
+    private void sendReleaseCallEvent(){
+        Runnable callRelease=new Runnable() {
+            @Override
+            public void run() {
+                byte[] data = Command.DISC_CALL_RELEASE.getBytes();
+                DatagramPacket datagramPacket = new DatagramPacket(
+                        data, data.length, Multicast.getMulticast().getInetAddress(), Constants.MULTI_BROADCAST_PORT);
+                try {
+                    MulticastSocket multicastSocket = Multicast.getMulticast().getMulticastSocket();
+                    if (multicastSocket != null) {
+                        multicastSocket.send(datagramPacket);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        threadPool.execute(callRelease);
+
+
+    }
+
+    private void receiveReleaseCallEvent(){
+        Runnable callRelease=new Runnable() {
+            @Override
+            public void run() {
+                byte[] data = Command.DISC_CALL_RELEASE_RECEVICE.getBytes();
+                DatagramPacket datagramPacket = new DatagramPacket(
+                        data, data.length, Multicast.getMulticast().getInetAddress(), Constants.MULTI_BROADCAST_PORT);
+                try {
+                    MulticastSocket multicastSocket = Multicast.getMulticast().getMulticastSocket();
+                    if (multicastSocket != null) {
+                        multicastSocket.send(datagramPacket);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        threadPool.execute(callRelease);
+
+
     }
 
     /**
@@ -334,6 +391,25 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
             intercomAdapter.notifyItemRangeChanged(0, userBeanList.size());
         }
     }
+
+    /**
+     *
+     * @param ipAddress
+     */
+    public void releasePTT(final String ipAddress) {
+        IntercomUserBean userBean = new IntercomUserBean(ipAddress);
+        tv.setText("播放结束");
+    }
+    /**
+     *
+     * @param ipAddress
+     */
+    public void releaseBTT(final String ipAddress) {
+        IntercomUserBean userBean = new IntercomUserBean(ipAddress);
+        tv.setText("按下");
+    }
+
+
 
     /**
      * 增加新的用户

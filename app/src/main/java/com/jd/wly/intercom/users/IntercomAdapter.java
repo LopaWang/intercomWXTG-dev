@@ -45,11 +45,13 @@ public class IntercomAdapter extends RecyclerView.Adapter<IntercomAdapter.ViewHo
 
         public final View itemView;
         public final TextView userName;
+        public final TextView tvSpeak;
 
         public ViewHolder(View itemView) {
             super(itemView);
             this.itemView = itemView;
             userName = (TextView) itemView.findViewById(R.id.intercom_user_name_tv);
+            tvSpeak = (TextView) itemView.findViewById(R.id.tv_speaking);
         }
     }
 }
