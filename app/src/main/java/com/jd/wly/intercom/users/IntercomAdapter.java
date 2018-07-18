@@ -54,4 +54,5 @@ public class IntercomAdapter extends RecyclerView.Adapter<IntercomAdapter.ViewHo
             tvSpeak = (TextView) itemView.findViewById(R.id.tv_speaking);
         }
     }
+
 }

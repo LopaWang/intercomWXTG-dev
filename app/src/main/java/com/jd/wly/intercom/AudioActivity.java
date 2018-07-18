@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Bundle;
@@ -58,7 +59,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     private RecyclerView localNetworkUser;
     private TextView startIntercom;
     private Button closeIntercom;
-    private TextView currentIp , tv;
+    private TextView currentIp;
     private ImageView chatRecord;
     private int count = 0;
     private List<IntercomUserBean> userBeanList = new ArrayList<>();
@@ -83,41 +84,13 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     private Tracker tracker;
 
 
-    private int mWeiChatAudio ,mWeiChatAudio1;
+    private int mWeiChatAudioError ,mWeiChatAudioBegin , mWeiChatAudioUp;
     private SoundPool mSoundPool;//摇一摇音效
 
 
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
-    public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO1  = 100;
-    public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO2  = 200;
-    public static final int CALL_EVENT_INFO_IS_STOPED  = 300;
-    private boolean isFlag = true;
-    private Handler mHandler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what){
-                case MY_PERMISSIONS_REQUEST_RECORD_AUDIO1:
-                    isFlag = true;
-                    tv.setText("正在播放");
-                    startIntercom.setText("有人讲话");
-                    recorder.setRecording(false);
-                    break;
-                case MY_PERMISSIONS_REQUEST_RECORD_AUDIO2:
-//                    tv.setText("播放完毕");
-                    recorder.setRecording(true);
-                    if(isFlag){
-                        tracker.setPlaying(false);
-                        mSoundPool.play(mWeiChatAudio, 1, 1, 0, 0, 1);
-                        isFlag = false;
-                    }
-                    break;
-                case CALL_EVENT_INFO_IS_STOPED:
-                    tv.setText("播放完毕");
-            }
 
-        }
-    };
+    private boolean isOtherPlaying = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,10 +113,10 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
                                            @NonNull int[] grantResults) {
         if (requestCode == MY_PERMISSIONS_REQUEST_RECORD_AUDIO) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(AudioActivity.this, "权限申请成功", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AudioActivity.this, getResources().getText(R.string.permission_success), Toast.LENGTH_SHORT).show();
                 initData();
             } else {
-                Toast.makeText(AudioActivity.this, "权限申请失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AudioActivity.this,  getResources().getText(R.string.permission_fail), Toast.LENGTH_SHORT).show();
             }
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -151,7 +124,6 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
 
 
     private void initView() {
-        tv = (TextView) findViewById(R.id.tv);
         // 设置用户列表
         localNetworkUser = (RecyclerView) findViewById(R.id.activity_audio_local_network_user_rv);
         localNetworkUser.setLayoutManager(new LinearLayoutManager(this));
@@ -160,7 +132,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
         intercomAdapter = new IntercomAdapter(userBeanList);
         localNetworkUser.setAdapter(intercomAdapter);
         // 添加自己
-        addNewUser(new IntercomUserBean(IPUtil.getLocalIPAddress(), "我"));
+        addNewUser(new IntercomUserBean(IPUtil.getLocalIPAddress(), getResources().getString(R.string.me)));
 
         startIntercom = (TextView) findViewById(R.id.start_intercom);
         startIntercom.setOnTouchListener(this);
@@ -174,8 +146,9 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
 
         //初始化SoundPool
         mSoundPool = new SoundPool(1, AudioManager.STREAM_SYSTEM, 5);
-        mWeiChatAudio = mSoundPool.load(this, R.raw.weichat_audio, 1);
-        mWeiChatAudio1 = mSoundPool.load(this, R.raw.start_audio, 1);
+        mWeiChatAudioError = mSoundPool.load(this, R.raw.talkroom_sasasa, 1);
+        mWeiChatAudioBegin = mSoundPool.load(this, R.raw.talkroom_begin_ham, 1);
+        mWeiChatAudioUp = mSoundPool.load(this, R.raw.talkroom_up_ham, 1);
     }
 
     private void initData() {
@@ -205,13 +178,13 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
      */
     private void initJobHandler() {
         // 初始化音频输入节点
-        recorder = new Recorder(audioHandler ,mHandler);
+        recorder = new Recorder(audioHandler);
         encoder = new Encoder(audioHandler);
         sender = new Sender(audioHandler);
         // 初始化音频输出节点
         receiver = new Receiver(audioHandler);
         decoder = new Decoder(audioHandler);
-        tracker = new Tracker(audioHandler,recorder,this , mHandler);
+        tracker = new Tracker(audioHandler,recorder,this);
         // 开启音频输入、输出
 
         threadPool.execute(encoder);
@@ -241,17 +214,10 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_F2 ||
                 keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {
-//            Log.i(TAG, "onTouch: trscker.isplaying = " + tracker.isPlaying());
-//            if(tracker.isPlaying()){
-//
-//                return true;
-//            }
-//            Log.i(TAG, "onKeyDown: recorder = "+ recorder.isRecording() + ";recorder.is = " + recorder.isAlive());
-
-            if (!recorder.isRecording()) {
-                recorder.setRecording(true);
-                tracker.setPlaying(false);
-                threadPool.execute(recorder);
+            if (!isOtherPlaying) {
+                keyDown();
+            }else {
+                mSoundPool.play(mWeiChatAudioError, 1, 1, 0, 0, 1);
             }
             return true;
         }else if(keyCode==KeyEvent.KEYCODE_BACK){
@@ -265,11 +231,8 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_F2 ||
                 keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {
-
-            if (recorder.isRecording()) {
-                recorder.setRecording(false);
-                Log.i(TAG, "onKeyUp: recorder.setRecording(false);");
-                tracker.setPlaying(true);
+            if (!isOtherPlaying) {
+                keyUp();
             }
             return true;
         }
@@ -279,47 +242,49 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (v == chatRecord && recorder != null) {
-
-            Log.i(TAG, "onTouch: recorder.isRecording() = " + recorder.isRecording());
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                chatRecord.setImageDrawable(getResources().getDrawable(R.drawable.se_icon_voice_pressed));
-                startIntercom.setText("松开结束");
-                startIntercom.setTextColor(getResources().getColor(R.color.colorBlue));
-                mSoundPool.play(mWeiChatAudio1, 1, 1, 0, 0, 1);
-                try {
-                    Thread.sleep( 1000 );
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-
-                }
-                receiveReleaseCallEvent();
-                //发出提示音
-                Log.i(TAG, "onTouch: trscker.isplaying = " + tracker.isPlaying());
-                if (!recorder.isRecording()) {
-                    Log.i(TAG, "onTouch: 進來了");
-                    recorder.setRecording(true);
-                    tracker.setPlaying(false);
-                    threadPool.execute(recorder);
+                if (!isOtherPlaying) {
+                    keyDown();
+            }else {
+                    mSoundPool.play(mWeiChatAudioError, 1, 1, 0, 0, 1);
                 }
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                chatRecord.setImageDrawable(getResources().getDrawable(R.drawable.se_icon_voice_default));
-                startIntercom.setText("按住说话");
-                startIntercom.setTextColor(getResources().getColor(R.color.white));
-                if (recorder.isRecording()) {
-                    Log.i(TAG, "onTouch: 进來了");
-                    recorder.setRecording(false);
-                    tracker.setPlaying(true);
+                if (!isOtherPlaying) {
+                    keyUp();
                 }
-                //handle the call release event
-                sendReleaseCallEvent();
-                //handle the call release event ---end
-
 
             }
             return true;
         }
         return false;
     }
+
+
+    private void keyDown() {
+        chatRecord.setImageDrawable(getResources().getDrawable(R.drawable.se_icon_voice_pressed));
+        startIntercom.setText(getResources().getText(R.string.leave_end));
+        startIntercom.setTextColor(getResources().getColor(R.color.colorBlue));
+        mSoundPool.play(mWeiChatAudioBegin, 1, 1, 0, 0, 1);
+        if (!recorder.isRecording()) {
+            recorder.setRecording(true);
+            tracker.setPlaying(false);
+            threadPool.execute(recorder);
+            receiveReleaseCallEvent();
+        }
+    }
+
+    private void keyUp() {
+        chatRecord.setImageDrawable(getResources().getDrawable(R.drawable.se_icon_voice_default));
+        startIntercom.setText(getResources().getText(R.string.press_speak));
+        startIntercom.setTextColor(getResources().getColor(R.color.white));
+        if (recorder.isRecording()) {
+            recorder.setRecording(false);
+            tracker.setPlaying(true);
+            sendReleaseCallEvent();
+        }
+        mSoundPool.play(mWeiChatAudioUp, 1, 1, 0, 0, 1);
+    }
+
 
     private void sendReleaseCallEvent(){
         Runnable callRelease=new Runnable() {
@@ -339,8 +304,6 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
             }
         };
         threadPool.execute(callRelease);
-
-
     }
 
     private void receiveReleaseCallEvent(){
@@ -361,8 +324,6 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
             }
         };
         threadPool.execute(callRelease);
-
-
     }
 
     /**
@@ -393,20 +354,35 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     }
 
     /**
-     *
+     *抬起发送线程
      * @param ipAddress
      */
     public void releasePTT(final String ipAddress) {
         IntercomUserBean userBean = new IntercomUserBean(ipAddress);
-        tv.setText("播放结束");
+        startIntercom.setText(getResources().getText(R.string.press_speak));
+        if (userBeanList.contains(userBean)) {
+            int position = userBeanList.indexOf(userBean);
+            View view= localNetworkUser.getChildAt(position);
+            TextView tv = (TextView) view.findViewById(R.id.tv_speaking);
+            tv.setVisibility(View.GONE);
+            isOtherPlaying = false;
+        }
     }
     /**
-     *
+     *按下发送线程
      * @param ipAddress
      */
     public void releaseBTT(final String ipAddress) {
         IntercomUserBean userBean = new IntercomUserBean(ipAddress);
-        tv.setText("按下");
+        startIntercom.setText(getResources().getText(R.string.other_speak));
+
+        if (userBeanList.contains(userBean)) {
+            int position = userBeanList.indexOf(userBean);
+            View view= localNetworkUser.getChildAt(position);
+            TextView tv = (TextView) view.findViewById(R.id.tv_speaking);
+            tv.setVisibility(View.VISIBLE);
+            isOtherPlaying = true;
+        }
     }
 
 

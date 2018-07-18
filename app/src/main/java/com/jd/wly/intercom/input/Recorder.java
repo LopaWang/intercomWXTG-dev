@@ -25,11 +25,9 @@ public class Recorder extends JobHandler {
     private int inAudioBufferSize;
     // 录音标志
     private boolean isRecording = false;
-    private Handler mHandler;
 
-    public Recorder(Handler handler,Handler mHandler) {
+    public Recorder(Handler handler) {
         super(handler);
-        this.mHandler = mHandler;
         // 获取音频数据缓冲段大小
         inAudioBufferSize = AudioRecord.getMinBufferSize(
                 Constants.sampleRateInHz, Constants.inputChannelConfig, Constants.audioFormat);

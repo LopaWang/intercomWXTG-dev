@@ -11,14 +11,6 @@
         android:layout_height="wrap_content"
         android:text="@string/current_user"
         android:textSize="15sp" />
-    <TextView
-        android:id="@+id/tv"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="ddsa"
-        android:textColor="@color/red"
-        />
-
     <android.support.v7.widget.RecyclerView
         android:id="@+id/activity_audio_local_network_user_rv"
         android:layout_width="match_parent"
@@ -47,9 +39,10 @@
 
             <ImageView
                 android:id="@+id/chat_record"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:src="@drawable/comment_voice_selector"
+                android:layout_gravity="center"
                 android:visibility="visible" />
             <TextView
                 android:id="@+id/start_intercom"

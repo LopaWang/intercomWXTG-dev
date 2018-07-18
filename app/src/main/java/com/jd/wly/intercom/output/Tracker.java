@@ -16,8 +16,6 @@ import com.jd.wly.intercom.job.JobHandler;
 import com.jd.wly.intercom.util.Constants;
 
 import static android.content.ContentValues.TAG;
-import static com.jd.wly.intercom.AudioActivity.MY_PERMISSIONS_REQUEST_RECORD_AUDIO1;
-import static com.jd.wly.intercom.AudioActivity.MY_PERMISSIONS_REQUEST_RECORD_AUDIO2;
 
 /**
  * AudioTrack音频播放
@@ -27,26 +25,23 @@ import static com.jd.wly.intercom.AudioActivity.MY_PERMISSIONS_REQUEST_RECORD_AU
 public class Tracker extends JobHandler {
 
     private AudioTrack audioTrack;
-    protected Handler handler , mHandler;
+    protected Handler handler;
     // 音频大小
     private int outAudioBufferSize;
     // 播放标志
     private boolean isPlaying = true;
 
-    //有其他手机在讲话
-    private boolean isOtherPlaying = false;
     private Recorder mRecorder;
 
     private int mWeiChatAudio;
     private SoundPool mSoundPool;//摇一摇音效
     private Context mContext;
 
-    public Tracker(Handler handler, Recorder recorder, Context context , Handler mHandler) {
+    public Tracker(Handler handler, Recorder recorder, Context context) {
         super(handler);
         this.handler = handler;
         this.mRecorder = recorder;
         this.mContext = context;
-        this.mHandler = mHandler;
         // 获取音频数据缓冲段大小
         outAudioBufferSize = AudioTrack.getMinBufferSize(
                 Constants.sampleRateInHz, Constants.outputChannelConfig, Constants.audioFormat);
@@ -65,18 +60,10 @@ public class Tracker extends JobHandler {
     public void setPlaying(boolean playing) {
         isPlaying = playing;
     }
-    public boolean isOtherPlaying(){
-        return isOtherPlaying;
-    }
-    public void setOtherPlaying(boolean playing) {
-        isOtherPlaying = playing;
-    }
-
     @Override
     public void run() {
         AudioData audioData;
         while ((audioData = MessageQueue.getInstance(MessageQueue.TRACKER_DATA_QUEUE).take()) != null) {
-            Message message = new Message();
                 if (isPlaying()) {
                     short[] bytesPkg = audioData.getRawData();
                     try {
@@ -87,23 +74,8 @@ public class Tracker extends JobHandler {
                         Log.i(TAG, "run: e = " + e);
                         e.printStackTrace();
                     }
-                    setOtherPlaying(true);
-                    message.what = MY_PERMISSIONS_REQUEST_RECORD_AUDIO1;
-                    //mHandler.sendMessage(message);
-
-            }else {
-                    Log.i(TAG, "run: isNotPlaying()");
-                    Log.i(TAG, "run: mRecorder.isRecording() = " + mRecorder.isRecording());
-                    //发出提示音
-
-                    setOtherPlaying(false);
-                    message.what = MY_PERMISSIONS_REQUEST_RECORD_AUDIO2;
-                    mHandler.sendMessage(message);
-                }
-
+            }
         }
-
-
     }
 
     @Override
