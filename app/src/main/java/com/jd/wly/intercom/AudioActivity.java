@@ -360,6 +360,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     public void releasePTT(final String ipAddress) {
         IntercomUserBean userBean = new IntercomUserBean(ipAddress);
         startIntercom.setText(getResources().getText(R.string.press_speak));
+        chatRecord.setImageDrawable(getResources().getDrawable(R.drawable.comment_voice_selector));
         if (userBeanList.contains(userBean)) {
             int position = userBeanList.indexOf(userBean);
             View view= localNetworkUser.getChildAt(position);
@@ -375,7 +376,7 @@ public class AudioActivity extends Activity implements View.OnClickListener, Vie
     public void releaseBTT(final String ipAddress) {
         IntercomUserBean userBean = new IntercomUserBean(ipAddress);
         startIntercom.setText(getResources().getText(R.string.other_speak));
-
+        chatRecord.setImageDrawable(getResources().getDrawable(R.drawable.se_icon_voice_error));
         if (userBeanList.contains(userBean)) {
             int position = userBeanList.indexOf(userBean);
             View view= localNetworkUser.getChildAt(position);
